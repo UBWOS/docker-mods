@@ -485,7 +485,7 @@ run_branding() {
 }
 
 # Run alias creation functions
-create_lsiown_alias
+create_ubwosown_alias
 create_with_contenv_alias
 
 # Main script loop
@@ -503,7 +503,7 @@ elif [[ -n "${DOCKER_MODS+x}" ]]; then
     run_mods
 fi
 
-if [[ "${LSIO_FIRST_PARTY}" = "true" ]]; then
+if [[ "${UBWOS_FIRST_PARTY}" = "true" ]]; then
     run_branding
 fi
 
