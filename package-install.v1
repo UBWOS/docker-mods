@@ -20,7 +20,7 @@ write_mod_debug "Package install script version ${PKG_SCRIPT_VER}"
 if [[ -f "/mod-pip-packages-to-install.list" ]]; then
     IFS=' ' read -ra PIP_PACKAGES <<< "$(tr '\n' ' ' < /mod-pip-packages-to-install.list)"
     if [[ ${#PIP_PACKAGES[@]} -ne 0 ]] && [[ ${PIP_PACKAGES[*]} != "" ]]; then
-        if [[ "$(command -v python3)" != "/lsiopy/bin/python3" ]]; then
+        if [[ "$(command -v python3)" != "/ubwospy/bin/python3" ]]; then
             CREATE_VENV="true"
             write_mod_debug "Marking venv for creation and adding python os dependencies to install list."
             if [[ -f /usr/bin/apt ]]; then
@@ -33,7 +33,7 @@ if [[ -f "/mod-pip-packages-to-install.list" ]]; then
                 echo "python3" >> /mod-repo-packages-to-install.list
             fi
         else
-            write_mod_debug "Venv at /lsiopy is already active"
+            write_mod_debug "Venv at /ubwospy is already active"
         fi
     else
         write_mod_debug "No pip packages identified in install list, skipping."
@@ -75,16 +75,16 @@ if [[ -f "/mod-pip-packages-to-install.list" ]]; then
         write_mod_info "Installing all pip packages"
         if [[ ${CREATE_VENV} == "true" ]]; then
             write_mod_info "Creating venv"
-            python3 -m venv /lsiopy
+            python3 -m venv /ubwospy
         fi
         write_mod_debug "Updating/installing pip, wheel and setuptools."
         python3 -m pip install -U pip wheel setuptools
         PIP_ARGS=()
         if [[ -f /usr/bin/apt ]] && grep -q 'ID=ubuntu' /etc/os-release; then
-            PIP_ARGS+=("-f" "https://wheel-index.linuxserver.io/ubuntu/")
+            PIP_ARGS+=("-f" "https://wheel-index.ubwos.io/ubuntu/")
         elif [[ -f /sbin/apk ]]; then
             ALPINE_VER=$(grep main /etc/apk/repositories | sed 's|.*alpine/v||' | sed 's|/main.*||')
-            PIP_ARGS+=("-f" "https://wheel-index.linuxserver.io/alpine-${ALPINE_VER}/")
+            PIP_ARGS+=("-f" "https://wheel-index.ubwos.io/alpine-${ALPINE_VER}/")
         fi
         write_mod_debug "Installing defined pip packages: ${PIP_PACKAGES[@]}"
         write_mod_debug "Using pip args ${PIP_ARGS[@]}"
