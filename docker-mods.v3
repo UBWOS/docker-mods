@@ -134,7 +134,7 @@ create_ubwosown_alias() {
 	PATH=("${@:2}")
 	/usr/bin/find "${PATH[@]}" "${MAXDEPTH[@]}" \( ! -group "${GROUP}" -o ! -user "${USER}" \) -exec chown "${OPTIONS[@]}" "${USER}":"${GROUP}" {} + || printf "${ERROR}"
 	EOF
-    chmod +x /usr/bin/lsiown
+    chmod +x /usr/bin/ubwosown
 }
 
 # Create our with-contenv alias with umask support
