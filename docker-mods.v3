@@ -105,9 +105,9 @@ process_custom_services() {
 }
 
 # Create our noisy chown alias to handle read-only/remote volumes
-create_lsiown_alias() {
+create_ubwosown_alias() {
     # intentional tabs in the heredoc
-    cat <<-'EOF' >/usr/bin/lsiown
+    cat <<-'EOF' >/usr/bin/ubwosown
 	#!/bin/bash
 
 	MAXDEPTH=("-maxdepth" "0")
@@ -298,15 +298,15 @@ run_mods() {
     for DOCKER_MOD in $(echo "${DOCKER_MODS}" | tr '|' '\n'); do
         # Support alternative endpoints
         case "${DOCKER_MOD}" in
-        linuxserver/* )
-            [[ ${DOCKER_MODS_FORCE_REGISTRY,,} = "true" ]] && REGISTRY="registry-1.docker.io" || REGISTRY="lscr.io"
+        UBWOS/* )
+            [[ ${DOCKER_MODS_FORCE_REGISTRY,,} = "true" ]] && REGISTRY="registry-1.docker.io"
             ;;
-        docker.io/linuxserver/* )
-            [[ ${DOCKER_MODS_FORCE_REGISTRY,,} = "true" ]] && REGISTRY="registry-1.docker.io" || REGISTRY="lscr.io"
+        docker.io/ubwos/* )
+            [[ ${DOCKER_MODS_FORCE_REGISTRY,,} = "true" ]] && REGISTRY="registry-1.docker.io"
             DOCKER_MOD="${DOCKER_MOD#docker.io/*}"
             ;;
-        ghcr.io/linuxserver/* )
-            [[ ${DOCKER_MODS_FORCE_REGISTRY,,} = "true" ]] && REGISTRY="ghcr.io" || REGISTRY="lscr.io"
+        ghcr.io/ubwos/* )
+            [[ ${DOCKER_MODS_FORCE_REGISTRY,,} = "true" ]] && REGISTRY="ghcr.io"
             DOCKER_MOD="${DOCKER_MOD#ghcr.io/*}"
             ;;
         docker.io/* )
@@ -338,17 +338,16 @@ run_mods() {
         FILENAME="${USERNAME}.${REPO}.${TAG}"
         MANIFEST_URL="https://${REGISTRY}/v2/${ENDPOINT}/manifests"
         BLOB_URL="https://${REGISTRY}/v2/${ENDPOINT}/blobs/"
-        MOD_UA="Mozilla/5.0 (Linux $(uname -m)) linuxserver.io ${REGISTRY}/${ENDPOINT}:${TAG}"
+        MOD_UA="Mozilla/5.0 (Linux $(uname -m)) UBWOS ${REGISTRY}/${ENDPOINT}:${TAG}"
         write_mod_debug "Registry='${REGISTRY}', Repository='${USERNAME}', Image='${ENDPOINT}', Tag='${TAG}'"
         case "${REGISTRY}" in
-            "lscr.io") AUTH_URL="https://ghcr.io/token?scope=repository%3A${USERNAME}%2F${REPO}%3Apull";;
             "ghcr.io") AUTH_URL="https://ghcr.io/token?scope=repository%3A${USERNAME}%2F${REPO}%3Apull";;
             "quay.io") AUTH_URL="https://quay.io/v2/auth?service=quay.io&scope=repository%3A${USERNAME}%2F${REPO}%3Apull";;
             "registry-1.docker.io") AUTH_URL="https://auth.docker.io/token?service=registry.docker.io&scope=repository:${ENDPOINT}:pull";;
             *) AUTH_URL=$(get_auth_url "${MANIFEST_URL}" "${TAG}")
         esac
         # Kill off modification logic if any of the usernames are banned
-        for BANNED in $(curl -s https://raw.githubusercontent.com/linuxserver/docker-mods/master/blacklist.txt); do
+        for BANNED in $(curl -s https://raw.githubusercontent.com/UBWOS/docker-mods/master/blacklist.txt); do
             if [[ "${BANNED,,}" == "${USERNAME,,}" ]]; then
                 if [[ -z ${RUN_BANNED_MODS+x} ]]; then
                     write_mod_info "${DOCKER_MOD} is banned from use due to reported abuse, skipping mod"
@@ -370,9 +369,8 @@ run_mods() {
             write_mod_info "Could not fetch auth URL from registry for ${DOCKER_MOD}, attempting unauthenticated fetch"
         fi
         write_mod_info "Adding ${DOCKER_MOD} to container"
-        # If we're using lscr try and get the manifest from ghcr, if it fails re-request a token from Docker Hub
-        if [[ "${REGISTRY}" == "lscr.io" ]]; then
-            if [[ -n $(curl --user-agent "${MOD_UA}" -sLH "Authorization: Bearer ${TOKEN}" "${MANIFEST_URL}/${TAG}" | jq -r '.errors' >/dev/null 2>&1) ]]; then
+        # try and get the manifest from ghcr, if it fails re-request a token from Docker Hub
+        if [[ -n $(curl --user-agent "${MOD_UA}" -sLH "Authorization: Bearer ${TOKEN}" "${MANIFEST_URL}/${TAG}" | jq -r '.errors' >/dev/null 2>&1) ]]; then
                 write_mod_debug "Couldn't fetch manifest from ghcr.io, trying docker.io"
                 AUTH_URL="https://auth.docker.io/token?service=registry.docker.io&scope=repository:${ENDPOINT}:pull"
                 TOKEN="$(
@@ -381,7 +379,6 @@ run_mods() {
                         "${AUTH_URL}" |
                         jq -r '.token'
                 )"
-            fi
         fi
         if [[ -n "${AUTH_URL}" ]]; then
             write_mod_debug "Using ${AUTH_URL} as auth endpoint"
@@ -476,17 +473,14 @@ run_mods_local() {
 run_branding() {
   # intentional tabs in the heredoc
   cat <<-EOF >/etc/s6-overlay/s6-rc.d/init-adduser/branding
-	───────────────────────────────────────
-
-	      ██╗     ███████╗██╗ ██████╗
-	      ██║     ██╔════╝██║██╔═══██╗
-	      ██║     ███████╗██║██║   ██║
-	      ██║     ╚════██║██║██║   ██║
-	      ███████╗███████║██║╚██████╔╝
-	      ╚══════╝╚══════╝╚═╝ ╚═════╝
-
-	   Brought to you by linuxserver.io
-	───────────────────────────────────────
+	────────────────────────────────────────────
+	██╗   ██╗██████╗ ██╗    ██╗ ██████╗ ███████╗
+	██║   ██║██╔══██╗██║    ██║██╔═══██╗██╔════╝
+	██║   ██║██████╔╝██║ █╗ ██║██║   ██║███████╗
+	██║   ██║██╔══██╗██║███╗██║██║   ██║╚════██║
+	╚██████╔╝██████╔╝╚███╔███╔╝╚██████╔╝███████║
+	 ╚═════╝ ╚═════╝  ╚══╝╚══╝  ╚═════╝ ╚══════╝
+	────────────────────────────────────────────
 	EOF
 }
 
